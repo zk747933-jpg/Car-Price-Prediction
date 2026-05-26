@@ -10,9 +10,9 @@ st.set_page_config(
     layout="centered"
 )
 
-# ---------------- FILE NAMES ----------------
-MODEL_FILE = "model.pkl"
-DATA_FILE = "cars.csv"
+# ---------------- YOUR FILE NAMES ----------------
+MODEL_FILE = "LinearRegressionModel (1).pkl"
+DATA_FILE = "cleaned Car (1).csv"
 
 # ---------------- CHECK FILES ----------------
 missing_files = []
@@ -24,9 +24,8 @@ if not os.path.exists(DATA_FILE):
     missing_files.append(DATA_FILE)
 
 if missing_files:
-    st.error(f"Missing files: {', '.join(missing_files)}")
+    st.error(f"❌ Missing files: {', '.join(missing_files)}")
     st.stop()
-
 
 # ---------------- LOAD MODEL + DATA ----------------
 try:
@@ -36,23 +35,20 @@ try:
     car = pd.read_csv(DATA_FILE)
 
 except Exception as e:
-    st.error(f"Error loading files:\n{e}")
+    st.error(f"❌ Error loading files:\n{e}")
     st.stop()
-
 
 # ---------------- TITLE ----------------
 st.title("🚗 Car Price Predictor")
-st.markdown("Enter car details and predict estimated price")
-
+st.write("Enter car details below")
 
 # ---------------- CLEAN DATA ----------------
 car = car.dropna()
 
-companies = sorted(car["company"].unique())
-models = sorted(car["name"].unique())
-years = sorted(car["year"].unique(), reverse=True)
-fuel_types = sorted(car["fuel"].unique())
-
+companies = sorted(car['company'].unique())
+models = sorted(car['name'].unique())
+years = sorted(car['year'].unique(), reverse=True)
+fuel_types = sorted(car['fuel'].unique())
 
 # ---------------- INPUTS ----------------
 company = st.selectbox(
@@ -81,7 +77,6 @@ km_driven = st.number_input(
     value=0,
     step=1000
 )
-
 
 # ---------------- PREDICTION ----------------
 if st.button("Predict Price"):
