@@ -3,59 +3,66 @@ import pandas as pd
 import pickle
 import os
 
-# Page Config
+# ---------------- PAGE SETTINGS ----------------
 st.set_page_config(
     page_title="Car Price Predictor",
     page_icon="🚗",
     layout="centered"
 )
 
-# -------- Load Files --------
+# ---------------- FILE NAMES ----------------
 MODEL_FILE = "model.pkl"
 DATA_FILE = "cars.csv"
 
-# Check files exist
+# ---------------- CHECK FILES ----------------
+missing_files = []
+
 if not os.path.exists(MODEL_FILE):
-    st.error(f"❌ Missing file: {MODEL_FILE}")
-    st.stop()
+    missing_files.append(MODEL_FILE)
 
 if not os.path.exists(DATA_FILE):
-    st.error(f"❌ Missing file: {DATA_FILE}")
+    missing_files.append(DATA_FILE)
+
+if missing_files:
+    st.error(f"Missing files: {', '.join(missing_files)}")
     st.stop()
 
-# Load model and data
+
+# ---------------- LOAD MODEL + DATA ----------------
 try:
-    with open(MODEL_FILE, "rb") as file:
-        model = pickle.load(file)
+    with open(MODEL_FILE, "rb") as f:
+        model = pickle.load(f)
 
     car = pd.read_csv(DATA_FILE)
 
 except Exception as e:
-    st.error(f"❌ Error loading files:\n{e}")
+    st.error(f"Error loading files:\n{e}")
     st.stop()
 
 
-# -------- Title --------
+# ---------------- TITLE ----------------
 st.title("🚗 Car Price Predictor")
-st.write("Enter car details below to predict price")
+st.markdown("Enter car details and predict estimated price")
 
 
-# Clean dropdown values
-companies = sorted(car['company'].dropna().unique())
-car_models = sorted(car['name'].dropna().unique())
-years = sorted(car['year'].dropna().unique(), reverse=True)
-fuel_types = sorted(car['fuel'].dropna().unique())
+# ---------------- CLEAN DATA ----------------
+car = car.dropna()
+
+companies = sorted(car["company"].unique())
+models = sorted(car["name"].unique())
+years = sorted(car["year"].unique(), reverse=True)
+fuel_types = sorted(car["fuel"].unique())
 
 
-# -------- Inputs --------
+# ---------------- INPUTS ----------------
 company = st.selectbox(
     "Select Company",
     ["Select"] + list(companies)
 )
 
-car_model = st.selectbox(
+model_name = st.selectbox(
     "Select Model",
-    ["Select"] + list(car_models)
+    ["Select"] + list(models)
 )
 
 year = st.selectbox(
@@ -63,7 +70,7 @@ year = st.selectbox(
     ["Select"] + list(years)
 )
 
-fuel_type = st.selectbox(
+fuel = st.selectbox(
     "Select Fuel Type",
     ["Select"] + list(fuel_types)
 )
@@ -76,14 +83,14 @@ km_driven = st.number_input(
 )
 
 
-# -------- Prediction --------
+# ---------------- PREDICTION ----------------
 if st.button("Predict Price"):
 
     if (
         company == "Select"
-        or car_model == "Select"
+        or model_name == "Select"
         or year == "Select"
-        or fuel_type == "Select"
+        or fuel == "Select"
     ):
 
         st.warning("⚠ Please fill all fields")
@@ -92,11 +99,11 @@ if st.button("Predict Price"):
 
         input_df = pd.DataFrame(
             [[
-                car_model,
+                model_name,
                 company,
                 int(year),
                 km_driven,
-                fuel_type
+                fuel
             ]],
             columns=[
                 'name',
@@ -108,9 +115,13 @@ if st.button("Predict Price"):
         )
 
         try:
+
             prediction = model.predict(input_df)
 
-            price = round(float(prediction[0]), 2)
+            price = float(prediction[0])
+
+            if price < 0:
+                price = abs(price)
 
             if price >= 10000000:
                 display = f"{price/10000000:.2f} Crore"
@@ -121,7 +132,9 @@ if st.button("Predict Price"):
             else:
                 display = f"{price:,.2f}"
 
-            st.success(f"💰 Predicted Price: ₹ {display}")
+            st.success(
+                f"💰 Estimated Price: ₹ {display}"
+            )
 
         except Exception as e:
             st.error(f"Prediction Error: {e}")
